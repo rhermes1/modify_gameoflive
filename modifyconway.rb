@@ -1,16 +1,19 @@
 #!/usr/bin/env ruby
 class Field
   def initialize 
-    @field = [] 
+    @field = []
   end
   def read_data
     @f = File.new("array.txt", "r")
     @f.each do |row, x|
+        row.select{ |s| s.include? "." }.each{ |s| s.replace( " " ) }
         row.gsub!(/\n/)
         celle = row.split('')
 	celle.delete("\n")
         @field.push(celle)
+	@widht = celle.length
       end
+    @hight = @field.length
     @f.close
   end
 
@@ -65,11 +68,22 @@ class Game < Field
     @field.each_with_index do |row, x|
       zelle = []
       row.each_with_index do |cell, y| 
+        if @field[x][y] == 'X'
+          @status = 1
+        else
+          @status = 0
+        end
         alive = checkcelle(x,y)
-	 case alive
-	   when (2..3)
+	 case
+	   when @status == 0 && alive == 3
 	     zelle.push("X")
-	   when (0..1),(4..8)
+	   when @status == 1 && (2..3) === alive
+	     zelle.push("X")
+	   when @status == 1 && (0..1) === alive
+	     zelle.push(" ")
+	   when @status == 1 && (4..8) === alive
+	     zelle.push(" ")
+	   else
 	     zelle.push(" ")
          end
        end
@@ -82,39 +96,55 @@ class Game < Field
      umfeld=[[(-1),1],[(-1),0],[(-1),(-1)],[1,1],[1,(-1)],[1, 0],[0,1],[0,(-1)]]
      alive = 0
      umfeld.each_with_index do |row1, x1|
+         x2 = x
+	 y2 = y
 	 x1 = row1[0]
-	 y1 = row1[1]
-     end
-  end
-  
-  def torus_feld(x, x1, y, y1)
-     puts "x:#{x}x1:#{x1}y:#{y}y1:#{y1}"
-     if (x+x1) < @hight && (x+u1) >= 0 && (y+u2) < @widht && (y+u2) >= 0 && @field[x+x1][y+y1] == 'X'
+	  y1 = row1[1]
+    case
+      when (x2+x1) == @hight
+        x2 = -1 
+      when (x2+x1) == -1 
+        x2 = @hight 
+    end
+    case
+      when (y2+y1) == @widht
+        y2 = -1 
+      when (y2+y1) == -1 
+        y2 = @widht
+    end   
+       if @field[x2+x1][y2+y1] == 'X'
          alive += 1
+       end
      end
-  alive
+     alive
   end
 
+  def torusfeld(x, x1, y, y1)
+  end
+  
   def los
     runden = 0
     while runden < 5000
       system 'clear'
       search
       puts self 
-      sleep 1
       runden += 1
+      puts "Runde:#{runden}"
+      sleep 0.5 
     end
   end
 end
 a = Game.new
-puts "Wie soll das Feld eingelesen werden\n (1)Aus array.txt (2)Per Konsole eingeben"
-wahl = gets.chomp
-wahl.to_i
-  if wahl == 1
+puts "Wie soll das Feld eingelesen werden\n(1)Aus array.txt (2)Per Konsole eingeben"
+auswahl = gets.chomp
+auswahl.to_i
+case auswahl.to_i 
+  when 1
     a.read_data
-  else
-    a.create_data(4, 4)
-  end
-a.los
+    a.los
+  when 2 
+    a.create_data(5, 5)
+    a.los
+end
 
 
